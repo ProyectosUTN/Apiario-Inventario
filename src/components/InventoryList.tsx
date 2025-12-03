@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { collection, getDocs, onSnapshot, doc, updateDoc, addDoc, query, orderBy, type DocumentData, type QuerySnapshot } from 'firebase/firestore';
-import { db } from '../firebase';
+import React, { useEffect, useState, useRef } from 'react';
 import InventoryItemEditor from './InventoryItemEditor';
 import type { InventoryItem } from './InventoryItemEditor';
+import { fetchGraphQL } from '../api/graphqlClient';
 
-const candidateCollections = ['inventario', 'inventories', 'inventory', 'Inventory'];
+// GraphQL query string used in multiple places
+const GET_INSUMOS_STR = `query GetInsumos { insumos { id nombre cantidad unidad notas creadoEn } }`;
 
 const fmtDate = (val: unknown) => {
   try {
@@ -27,86 +27,60 @@ const InventoryList: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
 
-  useEffect(() => {
-    if (!db) {
-      // evitar setState síncrono dentro del efecto
-      setTimeout(() => {
-        setError('Firebase no inicializado.');
-        setLoading(false);
-      }, 0);
-      return;
+  const pollingRef = useRef<number | null>(null);
+
+  // loader used by effects and after mutations
+  const loadInsumos = async () => {
+    try {
+      const data = await fetchGraphQL(GET_INSUMOS_STR);
+      const arr: InventoryItem[] = (data?.insumos ?? []).map((d: any) => ({
+        id: d.id,
+        nombre: d.nombre,
+        descripcion: d.notas ?? '',
+        cantidad: d.cantidad ?? 0,
+        unidad: d.unidad ?? '',
+        tipo: '',
+        creadoEn: d.creadoEn
+      }));
+      setCollectionName('insumos');
+      setItems(arr.sort((a, b) => String(a.nombre ?? '').localeCompare(String(b.nombre ?? ''))));
+      setLoading(false);
+      setError(null);
+    } catch (e: any) {
+      console.warn('graphql fetch insumos', e?.message ?? e);
+      setError(e?.message ?? String(e));
+      setLoading(false);
     }
+  };
 
-    let unsub: (() => void) | null = null;
-
-    const detectAndSubscribe = async () => {
-      for (const candidate of candidateCollections) {
-        try {
-          const coll = collection(db!, candidate);
-          const snap = await getDocs(coll) as QuerySnapshot<DocumentData>;
-          if (snap.size > 0) {
-            setCollectionName(candidate);
-            const q = query(coll, orderBy('nombre'));
-            unsub = onSnapshot(q, (qSnap) => {
-              const arr = qSnap.docs.map(d => ({ id: d.id, ...(d.data() as unknown as Partial<InventoryItem>) } as InventoryItem));
-              setItems(arr);
-              setLoading(false);
-            }, (err) => {
-              setError(err?.message ?? String(err));
-              setLoading(false);
-            });
-            return;
-          }
-        } catch (e) {
-          // ignorar y probar siguiente
-          console.warn('inspect collection', candidate, e);
-        }
-      }
-
-      // Si no hay colecciones con docs, intentar suscribirse a 'inventario' de todos modos
-      try {
-        const fallback = 'inventario';
-        setCollectionName(fallback);
-        const coll = collection(db!, fallback);
-        const q = query(coll, orderBy('nombre'));
-        unsub = onSnapshot(q, (qSnap) => {
-          const arr = qSnap.docs.map(d => ({ id: d.id, ...(d.data() as unknown as Partial<InventoryItem>) } as InventoryItem));
-          setItems(arr);
-          setLoading(false);
-        }, (err) => {
-          setError(err?.message ?? String(err));
-          setLoading(false);
-        });
-      } catch (e) {
-        setError('No se pudo suscribir a inventario: ' + String(e));
-        setLoading(false);
-      }
-    };
-
-    detectAndSubscribe();
-
+  useEffect(() => {
+    let mounted = true;
+    loadInsumos();
+    pollingRef.current = window.setInterval(() => {
+      if (mounted) loadInsumos();
+    }, 5000);
     return () => {
-      try {
-        if (unsub) unsub();
-      } catch (e) {
-        console.warn('unsubscribe error', e);
-      }
+      mounted = false;
+      if (pollingRef.current) window.clearInterval(pollingRef.current);
     };
   }, []);
 
+  // The GraphQL schema supports updating insumos by id and cantidad only
   const updateItem = async (id: string, data: Partial<InventoryItem>) => {
     if (!collectionName) throw new Error('Collection not selected');
-    const dRef = doc(db!, collectionName, id);
-    await updateDoc(dRef, data as unknown as DocumentData);
+    const cantidad = data.cantidad;
+    const MUT = `mutation UpdateInsumo($id: ID!, $cantidad: Float) { updateInsumo(id: $id, cantidad: $cantidad) { id nombre cantidad unidad notas creadoEn } }`;
+    await fetchGraphQL(MUT, { id, cantidad });
+    await loadInsumos();
   };
 
   const changeQuantity = async (id: string, delta: number) => {
     if (!collectionName) return;
-    const dRef = doc(db!, collectionName, id);
-    // optimista: read current in state and update
     const it = items.find(i => i.id === id);
     const newQ = (it?.cantidad ?? 0) + delta;
-    await updateDoc(dRef, { cantidad: newQ });
+    const MUT = `mutation UpdateInsumo($id: ID!, $cantidad: Float) { updateInsumo(id:$id, cantidad:$cantidad) { id } }`;
+    await fetchGraphQL(MUT, { id, cantidad: newQ });
+    await loadInsumos();
   };
 
   const addNew = () => {
@@ -119,16 +93,15 @@ const InventoryList: React.FC = () => {
 
   const createItem = async (_id: string, data: Partial<InventoryItem>) => {
     if (!collectionName) throw new Error('Collection not selected');
-    const coll = collection(db!, collectionName);
-    const payload: Record<string, unknown> = {
+    const MUT = `mutation AddInsumo($input: InsumoInput!) { addInsumo(input: $input) { id nombre cantidad unidad notas creadoEn } }`;
+    const payload = {
       nombre: data.nombre ?? 'Nuevo ítem',
-      descripcion: data.descripcion ?? '',
+      notas: data.descripcion ?? '',
       cantidad: data.cantidad ?? 0,
-      unidad: data.unidad ?? '',
-      tipo: data.tipo ?? '',
-      creadoEn: data.creadoEn ?? new Date()
+      unidad: data.unidad ?? ''
     };
-    await addDoc(coll, payload as unknown as DocumentData);
+    await fetchGraphQL(MUT, { input: payload });
+    await loadInsumos();
   };
 
   const getBadgeClass = (tipo?: string | null) => {
