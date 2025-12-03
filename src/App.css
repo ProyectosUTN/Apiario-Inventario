@@ -1,0 +1,380 @@
+/* Variables para facilitar el cambio de colores */
+:root {
+    --primary-color: #ffc107; /* Amarillo/Naranja del botón */
+    --text-color-dark: #333;
+    --text-color-light: #757575;
+    --bg-color-light: #ffffff;
+    --bg-color-page: #f9f9f9;
+    --border-color: #e0e0e0;
+}
+
+/* Estilos base y reseteo */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: var(--bg-color-page);
+    /* El body ya no contiene el flexbox para que App.tsx lo controle */
+    color: var(--text-color-dark);
+    line-height: 1.5;
+}
+
+/* Contenedor que centra la aplicación */
+.app-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px 0; /* Pequeño padding vertical para pantallas pequeñas */
+}
+
+/* Contenedor principal para centrar y limitar el ancho */
+.login-container {
+    width: 100%;
+    max-width: 400px; /* Ancho máximo similar al de un móvil */
+    background-color: var(--bg-color-light);
+    padding: 40px 24px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.05); /* Sombra muy sutil */
+    border-radius: 8px;
+    text-align: center;
+    margin: auto; /* Para centrar en el contenedor app-wrapper */
+}
+
+/* --- Encabezado --- */
+.login-header {
+    margin-bottom: 30px;
+}
+
+.logo-circle {
+    width: 60px;
+    height: 60px;
+    background-color: var(--primary-color);
+    border-radius: 50%;
+    margin: 0 auto 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.logo-icon {
+    /* Simulando el icono de rejilla */
+    width: 50px;
+    height: 50px;
+    background-color: #f7e6b7;
+    border-radius: 50%;
+}
+
+.login-header h1 {
+    font-size: 16px;
+    color: var(--text-color-light);
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+.login-header h2 {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    color: var(--text-color-dark);
+}
+
+.tagline {
+    font-size: 14px;
+    color: var(--text-color-light);
+    margin-bottom: 30px;
+    padding: 0 10%;
+}
+
+/* --- Formulario --- */
+.login-form {
+    text-align: left;
+}
+
+.input-group {
+    margin-bottom: 20px;
+}
+
+.input-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-color-light);
+    margin-bottom: 5px;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    border: none;
+    border-bottom: 1px solid var(--border-color);
+    background-color: transparent;
+    outline: none;
+    color: var(--text-color-dark);
+}
+
+.input-group input:focus {
+    border-bottom: 2px solid var(--primary-color);
+}
+
+.btn-primary {
+    width: 100%;
+    padding: 15px;
+    background-color: var(--primary-color);
+    color: var(--text-color-dark);
+    border: none;
+    border-radius: 4px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 15px;
+    transition: background-color 0.3s;
+}
+
+.btn-primary:hover {
+    background-color: #ffab00;
+}
+
+/* --- Pie de página --- */
+.login-footer {
+    margin-top: 30px;
+    font-size: 14px;
+}
+
+.link-forgot {
+    display: block;
+    color: var(--text-color-dark);
+    text-decoration: none;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.link-create-account {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.login-footer p {
+    color: var(--text-color-light);
+    margin-bottom: 5px;
+}
+
+.design-note {
+    font-size: 12px;
+    color: var(--border-color);
+    margin-top: 25px;
+    padding: 0 15%;
+}
+
+/* --- Media Query para asegurar el centrado en pantallas grandes --- */
+@media (min-width: 600px) {
+    .app-wrapper {
+        padding: 50px 0;
+    }
+}
+/* Reutilizamos .login-container como base para el padding y max-width */
+.dashboard-container {
+    width: 100%;
+    max-width: 400px;
+    background-color: var(--bg-color-light);
+    padding: 30px 24px 100px 24px; /* Aumentamos el padding inferior por la nav bar */
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+    text-align: left;
+    margin: auto; /* Para asegurar el centrado dentro del app-wrapper */
+}
+
+/* Encabezado */
+.welcome-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 25px;
+}
+
+.greeting {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--text-color-dark);
+    flex-basis: 100%; /* Ocupa toda la línea */
+    margin-bottom: 5px;
+}
+
+.tagline-sm {
+    font-size: 13px;
+    color: var(--text-color-light);
+}
+
+.app-name-sm {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-color-light);
+}
+
+/* Título de Sección */
+.section-title {
+    font-size: 16px;
+    font-weight: bold;
+    color: var(--text-color-dark);
+    margin-top: 25px;
+    margin-bottom: 10px;
+}
+
+/* --- Métricas Grid --- */
+.metrics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Dos columnas iguales */
+    gap: 15px;
+}
+
+.metric-card {
+    padding: 15px;
+    border-radius: 8px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 100px;
+}
+
+/* Modificadores de color para Tarjetas */
+.card-green {
+    background-color: #e6f7e9;
+}
+
+.card-amber {
+    background-color: #fff8e1;
+}
+
+.metric-title {
+    font-size: 13px;
+    color: var(--text-color-light);
+}
+
+.metric-value {
+    font-size: 28px;
+    font-weight: bold;
+    color: var(--text-color-dark);
+    margin: 5px 0;
+}
+
+.metric-status {
+    font-size: 12px;
+    font-weight: 500;
+    color: #4CAF50;
+}
+
+.metric-card:nth-child(2) .icon-placeholder {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 20px;
+    height: 20px;
+    background-color: rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+}
+
+
+/* --- Alerta Card --- */
+.alert-card {
+    display: flex;
+    align-items: flex-start;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.alert-content {
+    flex-grow: 1;
+    margin-right: 15px;
+}
+
+.alert-title {
+    font-size: 16px;
+    font-weight: bold;
+    color: var(--text-color-dark);
+    margin-bottom: 5px;
+}
+
+.alert-description {
+    font-size: 14px;
+    color: var(--text-color-dark);
+    margin-bottom: 5px;
+}
+
+.alert-link {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.alert-icon-container {
+    padding: 2px;
+}
+
+.alert-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: var(--text-color-dark);
+    font-size: 14px;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* --- Tarea Card --- */
+.task-card {
+    display: flex;
+    justify-content: space-between;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.task-details {
+    flex-grow: 1;
+}
+
+.task-scheduled {
+    font-size: 12px;
+    color: #4CAF50;
+    font-weight: 500;
+    margin-bottom: 5px;
+}
+
+.task-location {
+    font-size: 16px;
+    font-weight: bold;
+    color: var(--text-color-dark);
+    margin-bottom: 3px;
+}
+
+.task-time, .task-description {
+    font-size: 14px;
+    color: var(--text-color-light);
+}
+
+.task-status {
+    padding-left: 15px;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    background-color: #d8f5d8;
+    color: #4CAF50;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+    white-space: nowrap;
+}
