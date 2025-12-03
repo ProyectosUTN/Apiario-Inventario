@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import './App.css'; // Importamos el CSS completo
 import LoginScreen from './components/LoginScreen';
 import DashboardScreen from './components/DashboardScreen';
+import InventoryPage from './components/InventoryPage';
+import TopNav from './components/TopNav';
 import { auth } from './firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import type { User } from 'firebase/auth';
@@ -10,8 +12,15 @@ import type { User } from 'firebase/auth';
 const App: React.FC = () => {
 	const [user, setUser] = useState<User | null>(null);
 	const [checkingAuth, setCheckingAuth] = useState(true);
+	const [page, setPage] = useState<'dashboard' | 'inventory'>('dashboard');
 
 	useEffect(() => {
+		// Si `auth` no está inicializado, no podemos suscribirnos ni leer user
+		if (!auth) {
+			setCheckingAuth(false);
+			return;
+		}
+
 		// 1) Revisar usuario en caché inmediatamente (síncrono)
 		const cached = auth.currentUser;
 		if (cached) {
@@ -24,12 +33,16 @@ const App: React.FC = () => {
 			setUser(u);
 			setCheckingAuth(false);
 		});
-		return () => unsub();
+		return unsub;
 	}, []);
 
 	// Nuevo: manejador de logout que se pasa al Dashboard
 	const handleLogout = async () => {
 		try {
+			if (!auth) {
+				console.warn('Auth no inicializado: no se puede cerrar sesión');
+				return;
+			}
 			await signOut(auth);
 		} catch (err) {
 			console.error('Error al cerrar sesión:', err);
@@ -48,7 +61,18 @@ const App: React.FC = () => {
 
 	return (
 		<div className="app-wrapper">
-			{user ? <DashboardScreen userEmail={user.email ?? undefined} onLogout={handleLogout} /> : <LoginScreen />}
+			{user ? (
+				<>
+					{page === 'dashboard' ? (
+						<DashboardScreen userEmail={user.email ?? undefined} onLogout={handleLogout} onOpenInventory={() => setPage('inventory')} />
+					) : (
+						<InventoryPage onBack={() => setPage('dashboard')} />
+					)}
+					<TopNav page={page} onNavigate={(p) => setPage(p)} onLogout={handleLogout} userEmail={user?.email ?? undefined} />
+				</>
+			) : (
+				<LoginScreen />
+			)}
 		</div>
 	);
 };

@@ -26,6 +26,9 @@ const LoginScreen: React.FC = () => {
         setLoading(true);
         try {
             const emailTrimmed = email.trim();
+            if (!auth) {
+                throw new Error('Servicio de autenticación no inicializado');
+            }
             await signInWithEmailAndPassword(auth, emailTrimmed, password);
             // onAuthStateChanged en App.tsx manejará la navegación
         } catch (err: any) {

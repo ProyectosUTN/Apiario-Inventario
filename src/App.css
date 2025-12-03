@@ -30,6 +30,10 @@ body {
     align-items: center;
     min-height: 100vh;
     padding: 20px 0; /* Pequeño padding vertical para pantallas pequeñas */
+    /* Asegurar fondo y color local para evitar estilos globales conflictivos */
+    background-color: var(--bg-color-page);
+    color: var(--text-color-dark);
+    width: 100%;
 }
 
 /* Contenedor principal para centrar y limitar el ancho */
@@ -377,4 +381,185 @@ body {
     font-size: 12px;
     font-weight: bold;
     white-space: nowrap;
+}
+
+/* --- Inventario --- */
+.inventory-list {
+    display: grid;
+    gap: 12px;
+}
+
+.inventory-item {
+    border: 1px solid var(--border-color);
+    padding: 12px;
+    border-radius: 8px;
+    background-color: var(--bg-color-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.inventory-item .meta {
+    display: flex;
+    flex-direction: column;
+}
+
+.inventory-item .meta strong {
+    font-size: 16px;
+    color: var(--text-color-dark);
+}
+
+.inventory-item .meta .subtitle {
+    color: var(--text-color-light);
+    font-size: 13px;
+    margin-top: 6px;
+}
+
+.inventory-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.small-btn {
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background: transparent;
+    cursor: pointer;
+}
+
+.small-btn.primary {
+    background: var(--primary-color);
+    border-color: #f0b000;
+}
+
+.editor-card {
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-color-light);
+}
+
+.form-row {
+    margin-bottom: 10px;
+}
+
+.form-row label {
+    display: block;
+    font-size: 13px;
+    color: var(--text-color-light);
+    margin-bottom: 6px;
+}
+
+.form-row input, .form-row textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.editor-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+/* --- Inventory item badge (colored bubble) --- */
+.item-badge {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: var(--text-color-dark);
+    background: var(--primary-color);
+    border: 1px solid rgba(0,0,0,0.06);
+    flex-shrink: 0;
+}
+
+/* Variantes de color segun tipo (si quieres mapear por tipo, añade la clase correspondiente) */
+.item-badge.card-green { background: #e6f7e9; }
+.item-badge.card-amber { background: #fff8e1; }
+
+.inventory-item .meta { display: flex; flex-direction: column; }
+
+/* Badges por tipo */
+.item-badge.badge-default { background: var(--primary-color); color: var(--text-color-dark); }
+.item-badge.badge-tools { background: #e6f7e9; color: #137a2b; }
+.item-badge.badge-supply { background: #fff8e1; color: #7a4b00; }
+.item-badge.badge-material { background: #e8f0ff; color: #0b4bd6; }
+.item-badge.badge-amber { background: #fff4e0; color: #8a5b00; }
+.item-badge.badge-med { background: #ffeef2; color: #9b0f3a; }
+
+/* Small visual polish */
+.item-badge { transition: transform .12s ease, box-shadow .12s ease; }
+.item-badge:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.06); }
+
+/* --- TopNav (mobile-style fixed bottom nav) --- */
+.topnav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0; /* pegada al borde inferior */
+    padding: 0; /* sin espacio extra, se verá como continuación */
+    display: flex;
+    justify-content: center;
+    z-index: 60;
+}
+.topnav-inner {
+    width: calc(100% - 32px);
+    max-width: 420px; /* alinear con el ancho de contenidos */
+    margin: 0 auto;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    background: var(--bg-color-light);
+    color: var(--text-color-dark);
+    border-left: 1px solid var(--border-color);
+    border-right: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    border-top: none; /* sin borde superior para parecer continuación */
+    border-bottom-left-radius: 8px; /* como los contenedores inferiores */
+    border-bottom-right-radius: 8px;
+    padding: 10px 12px;
+    box-shadow: none; /* integrado con la UI */
+    z-index: 80;
+}
+.nav-btn {
+    display: inline-flex;
+    flex: 1 1 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 8px 6px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-color-dark);
+    border-radius: 8px;
+    font-weight: 600;
+    transition: background-color .15s, transform .12s;
+}
+.nav-btn .nav-emoji { font-size: 18px; }
+.nav-btn .nav-label { font-size: 12px; }
+.nav-btn:hover { transform: translateY(-2px); }
+.nav-btn.active {
+    background: linear-gradient(180deg, rgba(255,193,7,0.14), rgba(255,193,7,0.08));
+    box-shadow: 0 6px 12px rgba(0,0,0,0.04);
+}
+.nav-spacer { flex: 1 1 auto; }
+.nav-user { font-size: 12px; color: var(--text-color-light); margin-right: 8px; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nav-btn.logout { color: #9b0f3a; }
+
+/* Ensure main content has bottom padding so it isn't covered by nav */
+.app-wrapper { padding-bottom: 80px; }
+
+/* On larger screens keep the nav visually compact and aligned with page */
+@media (min-width: 900px) {
+    .topnav-inner { max-width: 420px; }
 }
