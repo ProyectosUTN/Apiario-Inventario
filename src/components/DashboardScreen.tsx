@@ -5,6 +5,7 @@ import { db, firebaseConfig, auth } from '../firebase';
 type Props = {
     userEmail?: string;
     onLogout?: () => void;
+    onOpenInventory?: () => void;
 };
 
 // Componente para el icono del saludo (Emoji de abeja simulado)
@@ -288,11 +289,7 @@ const DashboardScreen: React.FC<Props> = ({ userEmail, onLogout }) => {
                 <div className="alert-content">
                     <p className="alert-title">{firstAlert?.title ?? 'Sin alertas'}</p>
                     <p className="alert-description">{firstAlert?.description ?? 'No hay alertas críticas en este momento.'}</p>
-                    {firstAlert?.link ? (
-                        <a href={firstAlert.link} className="alert-link">Ir al inventario</a>
-                    ) : (
-                        <a href="#" className="alert-link">Ir al inventario</a>
-                    )}
+                    {/* navigation links removed; TopNav handles page navigation */}
                 </div>
                 <div className="alert-icon-container">
                     <div className="alert-icon">i</div>
@@ -312,6 +309,7 @@ const DashboardScreen: React.FC<Props> = ({ userEmail, onLogout }) => {
                     <span className="status-badge">{nextTask?.dueIn ?? ''}</span>
                 </div>
             </div>
+            {/* navigation button removed; TopNav handles navigation */}
         </div>
     );
 };
