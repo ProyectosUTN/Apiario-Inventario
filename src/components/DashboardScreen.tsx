@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { doc, onSnapshot, collection, getDocs, type QuerySnapshot, type QueryDocumentSnapshot, type DocumentData } from 'firebase/firestore';
-import { db, firebaseConfig, auth } from '../firebase';
+import React, { useEffect, useState, useRef } from 'react';
+import { fetchGraphQL } from '../api/graphqlClient';
 
 type Props = {
     userEmail?: string;
@@ -39,17 +38,7 @@ type Task = {
 
 type FirestoreTimestampLike = { toDate?: () => Date; seconds?: number };
 
-type CheckedCollection = { name: string; size: number; ids: string[] };
-type DebugInfo = {
-    projectId: string;
-    user: { uid?: string; email?: string | null } | null;
-    checkedCollections: CheckedCollection[];
-    result?: 'found' | 'not-found';
-    dashboard?: { collectionSize?: number; metrics?: { exists?: boolean }; alerts?: { exists?: boolean } };
-    rootMetricsDoc?: { exists?: boolean };
-    rootAlertsDoc?: { exists?: boolean };
-    rootCollections?: { metricsCollectionSize?: number; alertsCollectionSize?: number };
-};
+ 
 
 const DashboardScreen: React.FC<Props> = ({ userEmail, onLogout }) => {
     const [metrics, setMetrics] = useState<Metric>({});
@@ -59,159 +48,55 @@ const DashboardScreen: React.FC<Props> = ({ userEmail, onLogout }) => {
     const [error, setError] = useState<string | null>(null);
     // removed debugInfo state (was used for temporary debug panel)
 
+    const pollRef = useRef<number | null>(null);
+
     useEffect(() => {
-        // Detección dinámica de estructura y debug inicial
-        const candidateCollections = ['dashboard', 'dashboards', 'Dashboard', 'DashboardData'];
-        const unsubscribers: (() => void)[] = [];
+        // Simplified: query the GraphQL API for dashboard data and poll for updates.
+        let mounted = true;
 
-        const detectAndSubscribe = async () => {
-            const projectId = firebaseConfig?.projectId ?? 'unknown';
-            const user = auth?.currentUser ? { uid: auth.currentUser.uid, email: auth.currentUser.email } : null;
-            let found = false;
-            const info: DebugInfo = { projectId, user, checkedCollections: [] };
+        const GET_DASHBOARD = `query GetDashboard { insumos { id } productos { id } activityLog(limit:5) { id action targetType targetId cantidadAntes cantidadDespues user timestamp } }`;
 
-            for (const colName of candidateCollections) {
-                try {
-                    const collSnap = await getDocs(collection(db!, colName)) as QuerySnapshot<DocumentData>;
-                    info.checkedCollections.push({ name: colName, size: collSnap.size, ids: collSnap.docs.map((d: QueryDocumentSnapshot<DocumentData>) => d.id) });
+        const fetchOnce = async () => {
+            try {
+                const data = await fetchGraphQL(GET_DASHBOARD);
+                if (!mounted) return;
+                const insumos = data?.insumos ?? [];
+                const productos = data?.productos ?? [];
+                const logs = data?.activityLog ?? [];
 
-                    if (collSnap.size > 0) {
-                        found = true;
-                        // Buscar docs metrics/alerts por id dentro de la colección encontrada
-                        const metricsDoc = collSnap.docs.find((d: QueryDocumentSnapshot<DocumentData>) => d.id === 'metrics') ?? collSnap.docs[0];
-                        const alertsDoc = collSnap.docs.find((d: QueryDocumentSnapshot<DocumentData>) => d.id === 'alerts') ?? collSnap.docs.find((d: QueryDocumentSnapshot<DocumentData>) => d.id !== metricsDoc.id) ?? null;
-
-                        // Suscribirse a metricsDoc
-                        const mUnsub = onSnapshot(doc(db!, colName, metricsDoc.id), (snap) => {
-                            if (snap.exists()) setMetrics(snap.data() as Metric);
-                        }, (err) => setError(err?.message ?? String(err)));
-                        unsubscribers.push(mUnsub);
-
-                        // Suscribirse al documento de tareas si existe (id 'task' o 'tasks')
-                        const taskDoc = collSnap.docs.find((d: QueryDocumentSnapshot<DocumentData>) => d.id === 'task')
-                            ?? collSnap.docs.find((d: QueryDocumentSnapshot<DocumentData>) => d.id === 'tasks') ?? null;
-                        if (taskDoc) {
-                            const tUnsub = onSnapshot(doc(db!, colName, taskDoc.id), (snap) => {
-                                if (snap.exists()) {
-                                    const data = snap.data();
-                                    // soportar doc que contiene un array de tareas o un objeto de tarea
-                                    if (Array.isArray(data)) {
-                                        setTasks(data.map((t: unknown, i: number) => ({ ...(t as Task), id: `${snap.id}-${i}` })));
-                                    } else if ((data as Record<string, unknown>).tasks && Array.isArray((data as Record<string, unknown>).tasks)) {
-                                        const arr = (data as Record<string, unknown>).tasks as unknown[];
-                                        setTasks(arr.map((t: unknown, i: number) => ({ ...(t as Task), id: `${snap.id}-${i}` })));
-                                    } else {
-                                        setTasks([{ ...(data as Task), id: snap.id }]);
-                                    }
-                                } else {
-                                    setTasks([]);
-                                }
-                            }, (err) => setError(err?.message ?? String(err)));
-                            unsubscribers.push(tUnsub);
-                        } else {
-                            // no task doc found in this collection
-                        }
-
-                        // Suscribirse a alertsDoc si existe
-                        if (alertsDoc) {
-                            const aUnsub = onSnapshot(doc(db!, colName, alertsDoc.id), (snap) => {
-                                if (snap.exists()) {
-                                    const data = snap.data() as Omit<Alert, 'id'>;
-                                    setAlerts([{ id: snap.id, ...data } as Alert]);
-                                } else {
-                                    setAlerts([]);
-                                }
-                            }, (err) => setError(err?.message ?? String(err)));
-                            unsubscribers.push(aUnsub);
-                        } else {
-                            setAlerts([]);
-                        }
-
-                        // Si la colección tuvo al menos un doc, dejar de probar otras colecciones
-                        break;
-                    }
-                } catch (e) {
-                    console.warn('Error inspeccionando colección', colName, e);
-                }
-            }
-
-            // Si no encontramos colecciones con docs, intentar leer campos dentro de un documento en una colección común (por ejemplo 'config' o 'app')
-            if (!found) {
-                // Lista de colecciones donde a veces se guardan configuraciones
-                const altCollections = ['config', 'app', 'settings'];
-                for (const col of altCollections) {
-                    try {
-                        const coll = await getDocs(collection(db!, col)) as QuerySnapshot<DocumentData>;
-                        info.checkedCollections.push({ name: col, size: coll.size, ids: coll.docs.map((d: QueryDocumentSnapshot<DocumentData>) => d.id) });
-                        if (coll.size > 0) {
-                            // buscar en el primer doc campos metrics/alerts
-                            const doc0 = coll.docs[0];
-                            const data = doc0.data();
-                            if (data && (data.metrics || data.alerts)) {
-                                found = true;
-                                if (data.metrics) setMetrics(data.metrics as Metric);
-                                if (data.alerts) {
-                                    const arr = Array.isArray(data.alerts) ? data.alerts : [data.alerts];
-                                    setAlerts(arr.map((a: Partial<Alert>, i: number) => ({ ...(a as Alert), id: `${doc0.id}-${i}` })));
-                                }
-                                // suscribirse al doc0 para cambios
-                                const dUnsub = onSnapshot(doc(db!, col, doc0.id), (snap) => {
-                                    if (snap.exists()) {
-                                        const d = snap.data();
-                                        if (d.metrics) setMetrics(d.metrics as Metric);
-                                        if (d.alerts) {
-                                            const arr = Array.isArray(d.alerts) ? d.alerts : [d.alerts];
-                                            setAlerts(arr.map((a: Partial<Alert>, i: number) => ({ ...(a as Alert), id: `${snap.id}-${i}` })));
-                                        }
-                                    }
-                                }, (err) => setError(err?.message ?? String(err)));
-                                unsubscribers.push(dUnsub);
-                                break;
-                            }
-                        }
-                    } catch (e) {
-                        console.warn('Error inspeccionando colección alternativa', col, e);
-                    }
-                }
-            }
-
-            // Actualizar loading/error según resultado
-            info.result = found ? 'found' : 'not-found';
-            if (!found) {
-                setError('No se encontraron documentos de dashboard/metrics o dashboard/alerts. Revisa rutas en Firestore Console.');
-            }
-            setLoading(false);
-            // guardar unsub para limpieza
-            return () => {
-                unsubscribers.forEach(u => {
-                    try {
-                        u();
-                    } catch (e) {
-                        console.warn('unsubscribe error', e);
-                    }
+                // Build simple metrics from available data
+                setMetrics({
+                    colmenasActive: productos.length,
+                    mielThisMonth: '—',
+                    metricStatus: `${insumos.length} insumos, ${productos.length} productos`
                 });
-            };
+
+                // Map activityLog to alerts
+                const mappedAlerts: Alert[] = (logs ?? []).map((l: any) => ({
+                    id: l.id,
+                    title: `${l.action} ${l.targetType}`,
+                    description: `Usuario: ${l.user ?? '—'} — Antes: ${l.cantidadAntes ?? '—'} — Después: ${l.cantidadDespues ?? '—'}`,
+                    severity: 'info',
+                    createdAt: l.timestamp
+                }));
+                setAlerts(mappedAlerts);
+                // no explicit tasks in this schema; leave empty or map if needed
+                setTasks([]);
+                setError(null);
+            } catch (e: any) {
+                console.warn('GraphQL dashboard fetch error', e?.message ?? e);
+                if (mounted) setError(e?.message ?? String(e));
+            } finally {
+                if (mounted) setLoading(false);
+            }
         };
 
-        if (!db) {
-            // Defer state updates to avoid sync setState inside effect body
-            setTimeout(() => {
-                setError('Firebase no inicializado.');
-                setLoading(false);
-            }, 0);
-            return;
-        }
-        const cleanupPromise = detectAndSubscribe();
+        fetchOnce();
+        pollRef.current = window.setInterval(() => fetchOnce(), 10000);
 
-        // Cleanup: detectAndSubscribe returns a function; ensure it runs on unmount
         return () => {
-            cleanupPromise.then(fn => {
-                try {
-                    if (typeof fn === 'function') fn();
-                } catch (e) {
-                    console.warn('cleanup promise error', e);
-                }
-            });
+            mounted = false;
+            if (pollRef.current) window.clearInterval(pollRef.current);
         };
     }, []);
 
