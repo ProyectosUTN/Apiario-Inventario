@@ -1,6 +1,6 @@
 {
   "projects": {
-    "default": "test01megan"
+    "default": "apiary-inventory"
   },
   "targets": {},
   "etags": {}

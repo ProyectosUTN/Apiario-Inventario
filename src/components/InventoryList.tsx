@@ -4,7 +4,7 @@ import type { InventoryItem } from './InventoryItemEditor';
 import { fetchGraphQL } from '../api/graphqlClient';
 
 // GraphQL query string used in multiple places
-const GET_INSUMOS_STR = `query GetInsumos { insumos { id nombre cantidad unidad notas creadoEn } }`;
+const GET_INSUMOS_STR = `query GetInsumos { insumos { id nombre cantidad unidad descripcion tipo creadoEn } }`;
 
 const fmtDate = (val: unknown) => {
   try {
@@ -32,22 +32,31 @@ const InventoryList: React.FC = () => {
   // loader used by effects and after mutations
   const loadInsumos = async () => {
     try {
+      console.log('[InventoryList] Iniciando carga de insumos...');
       const data = await fetchGraphQL(GET_INSUMOS_STR);
+      console.log('[InventoryList] Datos recibidos:', data);
+      console.log('[InventoryList] data?.insumos:', data?.insumos);
+      console.log('[InventoryList] Tipo de data:', typeof data);
+      console.log('[InventoryList] Keys de data:', data ? Object.keys(data) : 'data es null/undefined');
+      
       const arr: InventoryItem[] = (data?.insumos ?? []).map((d: any) => ({
         id: d.id,
         nombre: d.nombre,
-        descripcion: d.notas ?? '',
+        descripcion: d.descripcion ?? '',
         cantidad: d.cantidad ?? 0,
         unidad: d.unidad ?? '',
-        tipo: '',
+        tipo: d.tipo ?? '',
         creadoEn: d.creadoEn
       }));
+      console.log('[InventoryList] Items mapeados:', arr.length, 'items');
+      console.log('[InventoryList] Array completo:', arr);
       setCollectionName('insumos');
       setItems(arr.sort((a, b) => String(a.nombre ?? '').localeCompare(String(b.nombre ?? ''))));
       setLoading(false);
       setError(null);
     } catch (e: any) {
-      console.warn('graphql fetch insumos', e?.message ?? e);
+      console.error('[InventoryList] Error al cargar insumos:', e);
+      console.error('[InventoryList] Error message:', e?.message ?? String(e));
       setError(e?.message ?? String(e));
       setLoading(false);
     }
@@ -65,12 +74,18 @@ const InventoryList: React.FC = () => {
     };
   }, []);
 
-  // The GraphQL schema supports updating insumos by id and cantidad only
+  // Update item with all fields
   const updateItem = async (id: string, data: Partial<InventoryItem>) => {
     if (!collectionName) throw new Error('Collection not selected');
-    const cantidad = data.cantidad;
-    const MUT = `mutation UpdateInsumo($id: ID!, $cantidad: Float) { updateInsumo(id: $id, cantidad: $cantidad) { id nombre cantidad unidad notas creadoEn } }`;
-    await fetchGraphQL(MUT, { id, cantidad });
+    const input = {
+      nombre: data.nombre,
+      descripcion: data.descripcion,
+      cantidad: data.cantidad,
+      unidad: data.unidad,
+      tipo: data.tipo
+    };
+    const MUT = `mutation UpdateInsumo($id: ID!, $input: InventoryItemInput!) { updateInsumo(id: $id, input: $input) { id nombre cantidad unidad descripcion tipo creadoEn } }`;
+    await fetchGraphQL(MUT, { id, input });
     await loadInsumos();
   };
 
@@ -78,8 +93,15 @@ const InventoryList: React.FC = () => {
     if (!collectionName) return;
     const it = items.find(i => i.id === id);
     const newQ = (it?.cantidad ?? 0) + delta;
-    const MUT = `mutation UpdateInsumo($id: ID!, $cantidad: Float) { updateInsumo(id:$id, cantidad:$cantidad) { id } }`;
-    await fetchGraphQL(MUT, { id, cantidad: newQ });
+    const input = {
+      nombre: it?.nombre,
+      descripcion: it?.descripcion,
+      cantidad: newQ,
+      unidad: it?.unidad,
+      tipo: it?.tipo
+    };
+    const MUT = `mutation UpdateInsumo($id: ID!, $input: InventoryItemInput!) { updateInsumo(id:$id, input:$input) { id cantidad } }`;
+    await fetchGraphQL(MUT, { id, input });
     await loadInsumos();
   };
 
@@ -93,12 +115,13 @@ const InventoryList: React.FC = () => {
 
   const createItem = async (_id: string, data: Partial<InventoryItem>) => {
     if (!collectionName) throw new Error('Collection not selected');
-    const MUT = `mutation AddInsumo($input: InsumoInput!) { addInsumo(input: $input) { id nombre cantidad unidad notas creadoEn } }`;
+    const MUT = `mutation CreateInsumo($input: InventoryItemInput!) { createInsumo(input: $input) { id nombre cantidad unidad descripcion tipo creadoEn } }`;
     const payload = {
       nombre: data.nombre ?? 'Nuevo ítem',
-      notas: data.descripcion ?? '',
+      descripcion: data.descripcion ?? '',
       cantidad: data.cantidad ?? 0,
-      unidad: data.unidad ?? ''
+      unidad: data.unidad ?? '',
+      tipo: data.tipo ?? ''
     };
     await fetchGraphQL(MUT, { input: payload });
     await loadInsumos();

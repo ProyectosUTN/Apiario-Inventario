@@ -38,6 +38,12 @@ type Task = {
 
 type FirestoreTimestampLike = { toDate?: () => Date; seconds?: number };
 
+type Insumo = {
+    id: string;
+    nombre: string;
+    cantidad?: number;
+};
+
  
 
 const DashboardScreen: React.FC<Props> = ({ userEmail, onLogout }) => {
@@ -54,38 +60,50 @@ const DashboardScreen: React.FC<Props> = ({ userEmail, onLogout }) => {
         // Simplified: query the GraphQL API for dashboard data and poll for updates.
         let mounted = true;
 
-        const GET_DASHBOARD = `query GetDashboard { insumos { id } productos { id } activityLog(limit:5) { id action targetType targetId cantidadAntes cantidadDespues user timestamp } }`;
+        const GET_DASHBOARD = `query GetDashboard { insumos { id nombre cantidad } }`;
 
         const fetchOnce = async () => {
             try {
                 const data = await fetchGraphQL(GET_DASHBOARD);
                 if (!mounted) return;
                 const insumos = data?.insumos ?? [];
-                const productos = data?.productos ?? [];
-                const logs = data?.activityLog ?? [];
 
                 // Build simple metrics from available data
                 setMetrics({
-                    colmenasActive: productos.length,
+                    colmenasActive: insumos.length,
                     mielThisMonth: '—',
-                    metricStatus: `${insumos.length} insumos, ${productos.length} productos`
+                    metricStatus: `${insumos.length} insumos registrados`
                 });
 
-                // Map activityLog to alerts
-                const mappedAlerts: Alert[] = (logs ?? []).map((l: any) => ({
-                    id: l.id,
-                    title: `${l.action} ${l.targetType}`,
-                    description: `Usuario: ${l.user ?? '—'} — Antes: ${l.cantidadAntes ?? '—'} — Después: ${l.cantidadDespues ?? '—'}`,
-                    severity: 'info',
-                    createdAt: l.timestamp
-                }));
+                // Create simple alerts from insumos with low quantity
+                // Prioritize: 1) Most negative stock, 2) Lowest positive stock
+                const mappedAlerts: Alert[] = insumos
+                    .filter((i: Insumo) => (i.cantidad ?? 0) < 5)
+                    .sort((a: Insumo, b: Insumo) => {
+                        const cantA = a.cantidad ?? 0;
+                        const cantB = b.cantidad ?? 0;
+                        // Sort by quantity ascending (most negative first, then lowest positive)
+                        return cantA - cantB;
+                    })
+                    .map((i: Insumo, idx: number) => {
+                        const cantidad = i.cantidad ?? 0;
+                        const isNegative = cantidad < 0;
+                        return {
+                            id: `alert-${idx}`,
+                            title: isNegative ? `Stock negativo: ${i.nombre}` : `Stock bajo: ${i.nombre}`,
+                            description: `Cantidad disponible: ${cantidad}`,
+                            severity: isNegative ? 'critical' : 'warning',
+                            createdAt: new Date().toISOString()
+                        };
+                    });
                 setAlerts(mappedAlerts);
                 // no explicit tasks in this schema; leave empty or map if needed
                 setTasks([]);
                 setError(null);
-            } catch (e: any) {
-                console.warn('GraphQL dashboard fetch error', e?.message ?? e);
-                if (mounted) setError(e?.message ?? String(e));
+            } catch (e: unknown) {
+                const errorMessage = e instanceof Error ? e.message : String(e);
+                console.error('GraphQL dashboard fetch error', errorMessage);
+                if (mounted) setError(errorMessage);
             } finally {
                 if (mounted) setLoading(false);
             }
@@ -113,7 +131,7 @@ const DashboardScreen: React.FC<Props> = ({ userEmail, onLogout }) => {
         }
     };
 
-    const firstAlert = alerts[0];
+    const topTwoAlerts = alerts.slice(0, 2);
     const nextTask: Task | undefined = tasks[0];
 
     return (
@@ -170,16 +188,29 @@ const DashboardScreen: React.FC<Props> = ({ userEmail, onLogout }) => {
             {loading && <div> Leyendo datos...</div>}
             {error && <div style={{ color: 'crimson' }}>Error: {error}</div>}
             {/* Si no hay métricas ni alertas hay pistas en la consola: revisa projectId mostrado allí */}
-            <div className="alert-card card-amber">
-                <div className="alert-content">
-                    <p className="alert-title">{firstAlert?.title ?? 'Sin alertas'}</p>
-                    <p className="alert-description">{firstAlert?.description ?? 'No hay alertas críticas en este momento.'}</p>
-                    {/* navigation links removed; TopNav handles page navigation */}
+            {topTwoAlerts.length > 0 ? (
+                topTwoAlerts.map((alert) => (
+                    <div key={alert.id} className={`alert-card ${alert.severity === 'critical' ? 'card-red' : 'card-amber'}`} style={{ marginBottom: '10px' }}>
+                        <div className="alert-content">
+                            <p className="alert-title">{alert.title}</p>
+                            <p className="alert-description">{alert.description}</p>
+                        </div>
+                        <div className="alert-icon-container">
+                            <div className="alert-icon">{alert.severity === 'critical' ? '!' : 'i'}</div>
+                        </div>
+                    </div>
+                ))
+            ) : (
+                <div className="alert-card card-amber">
+                    <div className="alert-content">
+                        <p className="alert-title">Sin alertas</p>
+                        <p className="alert-description">No hay alertas críticas en este momento.</p>
+                    </div>
+                    <div className="alert-icon-container">
+                        <div className="alert-icon">i</div>
+                    </div>
                 </div>
-                <div className="alert-icon-container">
-                    <div className="alert-icon">i</div>
-                </div>
-            </div>
+            )}
 
             {/* --- Próxima Tarea --- */}
             <h3 className="section-title">Próxima tarea</h3>
