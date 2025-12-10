@@ -1,6 +1,6 @@
 import React from 'react';
 
-type NavPage = 'dashboard' | 'inventory';
+type NavPage = 'dashboard' | 'inventory' | 'colmenas' | 'cosechas';
 
 type Props = {
   page: NavPage;
@@ -31,6 +31,26 @@ const TopNav: React.FC<Props> = ({ page, onNavigate, onLogout, userEmail }) => {
         >
           <div className="nav-emoji">📦</div>
           <span className="nav-label">Inventario</span>
+        </button>
+
+        <button
+          className={`nav-btn ${page === 'colmenas' ? 'active' : ''}`}
+          onClick={() => onNavigate('colmenas')}
+          aria-current={page === 'colmenas' ? 'page' : undefined}
+          title="Colmenas"
+        >
+          <div className="nav-emoji">🐝</div>
+          <span className="nav-label">Colmenas</span>
+        </button>
+
+        <button
+          className={`nav-btn ${page === 'cosechas' ? 'active' : ''}`}
+          onClick={() => onNavigate('cosechas')}
+          aria-current={page === 'cosechas' ? 'page' : undefined}
+          title="Cosechas"
+        >
+          <div className="nav-emoji">🍯</div>
+          <span className="nav-label">Cosechas</span>
         </button>
 
         <div className="nav-spacer" />

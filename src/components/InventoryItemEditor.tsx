@@ -83,11 +83,11 @@ const InventoryItemEditor: React.FC<Props> = ({ item, onCancel, onSave }) => {
         {error && <div style={{ color: 'crimson' }}>{error}</div>}
 
         <div className="editor-actions">
-          <button type="button" onClick={onCancel} disabled={saving} className="small-btn">
-            Cancelar
+          <button type="button" onClick={onCancel} disabled={saving} className="small-btn cancel-btn">
+            ✖️ Cancelar
           </button>
-          <button type="submit" disabled={saving} className="small-btn primary">
-            {saving ? 'Guardando...' : 'Guardar'}
+          <button type="submit" disabled={saving} className="small-btn primary save-btn">
+            {saving ? '⏳ Guardando...' : '✓ Guardar'}
           </button>
         </div>
       </form>
