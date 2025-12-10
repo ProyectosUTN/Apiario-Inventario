@@ -57,22 +57,40 @@ const DashboardScreen: React.FC<Props> = ({ userEmail, onLogout }) => {
     const pollRef = useRef<number | null>(null);
 
     useEffect(() => {
-        // Simplified: query the GraphQL API for dashboard data and poll for updates.
+        // Query the GraphQL API for dashboard data and poll for updates.
         let mounted = true;
 
-        const GET_DASHBOARD = `query GetDashboard { insumos { id nombre cantidad } }`;
+        const GET_DASHBOARD = `query GetDashboard { 
+            colmenas { 
+                id 
+                estado 
+                apiarioID 
+                codigo 
+            } 
+            insumos { 
+                id 
+                nombre 
+                cantidad 
+            } 
+        }`;
 
         const fetchOnce = async () => {
             try {
                 const data = await fetchGraphQL(GET_DASHBOARD);
                 if (!mounted) return;
+                const colmenas = data?.colmenas ?? [];
                 const insumos = data?.insumos ?? [];
 
-                // Build simple metrics from available data
+                // Count active colmenas (estado = true)
+                const colmenasActivas = colmenas.filter((c: { estado?: boolean }) => c.estado === true).length;
+
+                // Build metrics from available data
                 setMetrics({
-                    colmenasActive: insumos.length,
+                    colmenasActive: colmenasActivas,
                     mielThisMonth: '—',
-                    metricStatus: `${insumos.length} insumos registrados`
+                    metricStatus: colmenasActivas > 0 
+                        ? `${colmenasActivas} de ${colmenas.length} colmenas activas` 
+                        : 'Sin colmenas activas'
                 });
 
                 // Create simple alerts from insumos with low quantity
@@ -131,7 +149,7 @@ const DashboardScreen: React.FC<Props> = ({ userEmail, onLogout }) => {
         }
     };
 
-    const topTwoAlerts = alerts.slice(0, 2);
+    const firstAlert = alerts[0];
     const nextTask: Task | undefined = tasks[0];
 
     return (
@@ -188,29 +206,16 @@ const DashboardScreen: React.FC<Props> = ({ userEmail, onLogout }) => {
             {loading && <div> Leyendo datos...</div>}
             {error && <div style={{ color: 'crimson' }}>Error: {error}</div>}
             {/* Si no hay métricas ni alertas hay pistas en la consola: revisa projectId mostrado allí */}
-            {topTwoAlerts.length > 0 ? (
-                topTwoAlerts.map((alert) => (
-                    <div key={alert.id} className={`alert-card ${alert.severity === 'critical' ? 'card-red' : 'card-amber'}`} style={{ marginBottom: '10px' }}>
-                        <div className="alert-content">
-                            <p className="alert-title">{alert.title}</p>
-                            <p className="alert-description">{alert.description}</p>
-                        </div>
-                        <div className="alert-icon-container">
-                            <div className="alert-icon">{alert.severity === 'critical' ? '!' : 'i'}</div>
-                        </div>
-                    </div>
-                ))
-            ) : (
-                <div className="alert-card card-amber">
-                    <div className="alert-content">
-                        <p className="alert-title">Sin alertas</p>
-                        <p className="alert-description">No hay alertas críticas en este momento.</p>
-                    </div>
-                    <div className="alert-icon-container">
-                        <div className="alert-icon">i</div>
-                    </div>
+            <div className="alert-card card-amber">
+                <div className="alert-content">
+                    <p className="alert-title">{firstAlert?.title ?? 'Sin alertas'}</p>
+                    <p className="alert-description">{firstAlert?.description ?? 'No hay alertas críticas en este momento.'}</p>
+                    {/* navigation links removed; TopNav handles page navigation */}
                 </div>
-            )}
+                <div className="alert-icon-container">
+                    <div className="alert-icon">i</div>
+                </div>
+            </div>
 
             {/* --- Próxima Tarea --- */}
             <h3 className="section-title">Próxima tarea</h3>

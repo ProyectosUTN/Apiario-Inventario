@@ -3,6 +3,8 @@ import './App.css'; // Importamos el CSS completo
 import LoginScreen from './components/LoginScreen';
 import DashboardScreen from './components/DashboardScreen';
 import InventoryPage from './components/InventoryPage';
+import ColmenaPage from './components/ColmenaPage';
+import CosechaPage from './components/CosechaPage';
 import TopNav from './components/TopNav';
 import { auth } from './firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
@@ -12,7 +14,7 @@ import type { User } from 'firebase/auth';
 const App: React.FC = () => {
 	const [user, setUser] = useState<User | null>(null);
 	const [checkingAuth, setCheckingAuth] = useState(true);
-	const [page, setPage] = useState<'dashboard' | 'inventory'>('dashboard');
+	const [page, setPage] = useState<'dashboard' | 'inventory' | 'colmenas' | 'cosechas'>('dashboard');
 
 	useEffect(() => {
 		// Si `auth` no está inicializado, no podemos suscribirnos ni leer user
@@ -65,8 +67,12 @@ const App: React.FC = () => {
 				<>
 					{page === 'dashboard' ? (
 						<DashboardScreen userEmail={user.email ?? undefined} onLogout={handleLogout} onOpenInventory={() => setPage('inventory')} />
-					) : (
+					) : page === 'inventory' ? (
 						<InventoryPage onBack={() => setPage('dashboard')} />
+					) : page === 'colmenas' ? (
+						<ColmenaPage onBack={() => setPage('dashboard')} />
+					) : (
+						<CosechaPage onBack={() => setPage('dashboard')} />
 					)}
 					<TopNav page={page} onNavigate={(p) => setPage(p)} onLogout={handleLogout} userEmail={user?.email ?? undefined} />
 				</>

@@ -39,7 +39,7 @@ const InventoryList: React.FC = () => {
       console.log('[InventoryList] Tipo de data:', typeof data);
       console.log('[InventoryList] Keys de data:', data ? Object.keys(data) : 'data es null/undefined');
       
-      const arr: InventoryItem[] = (data?.insumos ?? []).map((d: any) => ({
+      const arr: InventoryItem[] = (data?.insumos ?? []).map((d: InventoryItem & { id: string }) => ({
         id: d.id,
         nombre: d.nombre,
         descripcion: d.descripcion ?? '',
@@ -54,17 +54,19 @@ const InventoryList: React.FC = () => {
       setItems(arr.sort((a, b) => String(a.nombre ?? '').localeCompare(String(b.nombre ?? ''))));
       setLoading(false);
       setError(null);
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error('[InventoryList] Error al cargar insumos:', e);
-      console.error('[InventoryList] Error message:', e?.message ?? String(e));
-      setError(e?.message ?? String(e));
+      console.error('[InventoryList] Error message:', e instanceof Error ? e.message : String(e));
+      setError(e instanceof Error ? e.message : String(e));
       setLoading(false);
     }
   };
 
   useEffect(() => {
     let mounted = true;
-    loadInsumos();
+    void (async () => {
+      await loadInsumos();
+    })();
     pollingRef.current = window.setInterval(() => {
       if (mounted) loadInsumos();
     }, 5000);
@@ -146,7 +148,9 @@ const InventoryList: React.FC = () => {
         <small style={{ color: 'gray' }}>Colección: {collectionName ?? 'detectando...'}</small>
       </div>
       <div style={{ marginBottom: 8 }}>
-        <button onClick={addNew} className="small-btn" disabled={creating}>Agregar ítem</button>
+        <button onClick={addNew} className="small-btn add-item-btn" disabled={creating}>
+          <span>➕</span> Agregar ítem
+        </button>
       </div>
       {/* modal editor rendered below (used for both creating and editing) */}
       {loading && <div>Leyendo inventario...</div>}
@@ -172,9 +176,9 @@ const InventoryList: React.FC = () => {
             </div>
 
             <div className="inventory-actions">
-              <button onClick={() => changeQuantity(item.id, 1)} title="+1" className="small-btn">+1</button>
-              <button onClick={() => changeQuantity(item.id, -1)} title="-1" className="small-btn">-1</button>
-              <button onClick={() => setEditingId(item.id)} className="small-btn">Editar</button>
+              <button onClick={() => changeQuantity(item.id, 1)} title="+1" className="small-btn qty-btn-plus">+1</button>
+              <button onClick={() => changeQuantity(item.id, -1)} title="-1" className="small-btn qty-btn-minus">-1</button>
+              <button onClick={() => setEditingId(item.id)} className="small-btn edit-btn">✏️ Editar</button>
             </div>
 
             {/* editing now uses modal editor */}
@@ -184,7 +188,7 @@ const InventoryList: React.FC = () => {
 
       {(creating || editingId) && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ background: 'var(--card-bg, #fff)', padding: 16, borderRadius: 8, width: '92%', maxWidth: 640, boxShadow: '0 8px 32px rgba(0,0,0,0.25)' }}>
+          <div style={{ background: 'var(--card-bg, #fff)', padding: 16, borderRadius: 8, width: '92%', maxWidth: 400, boxShadow: '0 8px 32px rgba(0,0,0,0.25)' }}>
             <InventoryItemEditor
               item={editingId ? (items.find(i => i.id === editingId) || { id: editingId, nombre: '', descripcion: '', cantidad: 0, unidad: '', tipo: '', creadoEn: new Date() }) : { id: '', nombre: '', descripcion: '', cantidad: 0, unidad: '', tipo: '', creadoEn: new Date() }}
               onCancel={() => { setCreating(false); setEditingId(null); }}
