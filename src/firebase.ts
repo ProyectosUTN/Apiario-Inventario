@@ -17,12 +17,12 @@ const envConfig = {
 
 // Fallback a valores anteriormente usados (solo para dev local si no tienes .env configurado)
 const fallbackConfig = {
-  apiKey: "AIzaSyBBzP8ftv1ruHqv7vpc75QxVkojmQDVai4",
-  authDomain: "apimanager-6a2fe.firebaseapp.com",
-  projectId: "apimanager-6a2fe",
-  storageBucket: "apimanager-6a2fe.firebasestorage.app",
-  messagingSenderId: "158405929166",
-  appId: "1:158405929166:web:a4075f1977e86976f9889f"
+  apiKey: "AIzaSyD06DhqQmvxDMgBXEJgcRSE2kyoFJ57JFk",
+  authDomain: "apiary-inventory.firebaseapp.com",
+  projectId: "apiary-inventory",
+  storageBucket: "apiary-inventory.firebasestorage.app",
+  messagingSenderId: "713436866444",
+  appId: "1:713436866444:web:8b08a7aede87884e5358a9"
 };
 
 const firebaseConfig = {
