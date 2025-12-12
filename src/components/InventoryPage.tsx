@@ -8,8 +8,16 @@ type Props = {
 const InventoryPage: React.FC<Props> = () => {
   return (
     <div className="dashboard-container">
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-        <h2 style={{ margin: 0 }}>Inventario</h2>
+      {/* Encabezado de Página */}
+      <div className="page-header">
+        <div className="page-header-content">
+          <div className="page-icon-wrapper">
+            <span style={{ fontSize: '24px' }}>📋</span>
+          </div>
+          <div className="page-header-text">
+            <h2 className="page-title">Inventario</h2>
+          </div>
+        </div>
       </div>
       <InventoryList />
     </div>

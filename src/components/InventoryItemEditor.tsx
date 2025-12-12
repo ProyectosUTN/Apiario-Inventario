@@ -27,7 +27,7 @@ const InventoryItemEditor: React.FC<Props> = ({ item, onCancel, onSave }) => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleChange = (k: keyof InventoryItem) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (k: keyof InventoryItem) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const val = e.target.value;
     if (k === 'cantidad') {
       setForm(prev => ({ ...prev, cantidad: Number(val) }));
@@ -72,11 +72,27 @@ const InventoryItemEditor: React.FC<Props> = ({ item, onCancel, onSave }) => {
           </div>
           <div style={{ flex: 1 }} className="form-row">
             <label>Unidad</label>
-            <input value={form.unidad as string} onChange={handleChange('unidad')} />
+            <select value={form.unidad as string} onChange={handleChange('unidad')}>
+              <option value="">Seleccionar...</option>
+              <option value="Unidad">Unidad</option>
+              <option value="Pieza">Pieza</option>
+              <option value="Paquete">Paquete</option>
+              <option value="Caja">Caja</option>
+              <option value="Marco">Marco</option>
+              <option value="Kg">Kg</option>
+              <option value="Gramo">Gramo</option>
+            </select>
           </div>
           <div style={{ flex: 1 }} className="form-row">
             <label>Tipo</label>
-            <input value={form.tipo as string} onChange={handleChange('tipo')} />
+            <select value={form.tipo as string} onChange={handleChange('tipo')}>
+              <option value="">Seleccionar...</option>
+              <option value="Herramientas">Herramientas</option>
+              <option value="Protección (EPP)">Protección (EPP)</option>
+              <option value="Estructura">Estructura</option>
+              <option value="Alimentación">Alimentación</option>
+              <option value="Sanidad">Sanidad</option>
+            </select>
           </div>
         </div>
 

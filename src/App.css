@@ -196,29 +196,108 @@ body {
 /* Encabezado */
 .welcome-header {
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 25px;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: linear-gradient(135deg, #fff9e6 0%, #ffffff 100%);
+    border-radius: 12px;
+    border: 1px solid #ffe8a3;
+    box-shadow: 0 2px 8px rgba(255, 193, 7, 0.08);
+}
+
+.welcome-content {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.welcome-icon-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, #ffb300 100%);
+    border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.25);
+}
+
+.welcome-icon-wrapper span {
+    font-size: 24px;
+    filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.1));
+}
+
+.welcome-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
 }
 
 .greeting {
-    font-size: 18px;
-    font-weight: 500;
+    font-size: 20px;
+    font-weight: 600;
     color: var(--text-color-dark);
-    flex-basis: 100%; /* Ocupa toda la línea */
-    margin-bottom: 5px;
+    margin: 0;
+    line-height: 1.3;
 }
 
 .tagline-sm {
-    font-size: 13px;
+    font-size: 14px;
     color: var(--text-color-light);
+    margin: 0;
 }
 
 .app-name-sm {
     font-size: 13px;
     font-weight: 500;
     color: var(--text-color-light);
+}
+
+/* Encabezados de Página (para otras páginas sin mensaje) */
+.page-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: linear-gradient(135deg, #fff9e6 0%, #ffffff 100%);
+    border-radius: 12px;
+    border: 1px solid #ffe8a3;
+    box-shadow: 0 2px 8px rgba(255, 193, 7, 0.08);
+}
+
+.page-header-content {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.page-icon-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, #ffb300 100%);
+    border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.25);
+}
+
+.page-icon-wrapper span {
+    filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.1));
+}
+
+.page-header-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.page-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-color-dark);
+    margin: 0;
+    line-height: 1.3;
 }
 
 /* Título de Sección */
@@ -254,6 +333,14 @@ body {
 
 .card-amber {
     background-color: #fff8e1;
+}
+
+.card-red {
+    background-color: #ffe6e6;
+}
+
+.card-blue {
+    background-color: #e3f2fd;
 }
 
 .metric-title {
@@ -597,12 +684,14 @@ body {
     margin-bottom: 6px;
 }
 
-.form-row input, .form-row textarea {
+.form-row input, .form-row textarea, .form-row select {
     width: 100%;
     padding: 10px;
     border: 1px solid var(--border-color);
     border-radius: 6px;
     font-size: 14px;
+    background-color: var(--bg-color-light);
+    font-family: inherit;
 }
 
 .editor-actions {

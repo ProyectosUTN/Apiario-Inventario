@@ -132,10 +132,13 @@ const convertFirestoreReferences = (data) => {
 // Resolvers
 const resolvers = {
   Query: {
-    insumos: async () => {
+    insumos: async (_, args, context) => {
       try {
-        console.log("Fetching all insumos from Firestore...");
-        const snapshot = await db.collection("insumos").get();
+        if (!context.user) {
+          throw new Error("Authentication required");
+        }
+        console.log("Fetching insumos for user:", context.user.uid);
+        const snapshot = await db.collection("insumos").where("userId", "==", context.user.uid).get();
         console.log(`Found ${snapshot.docs.length} insumos in Firestore`);
         const result = snapshot.docs.map((doc) => ({
           id: doc.id,
@@ -158,10 +161,13 @@ const resolvers = {
         throw new Error("Failed to fetch insumo");
       }
     },
-    colmenas: async () => {
+    colmenas: async (_, args, context) => {
       try {
-        console.log("Fetching all colmenas from Firestore...");
-        const snapshot = await db.collection("colmenas").get();
+        if (!context.user) {
+          throw new Error("Authentication required");
+        }
+        console.log("Fetching colmenas for user:", context.user.uid);
+        const snapshot = await db.collection("colmenas").where("userId", "==", context.user.uid).get();
         console.log(`Found ${snapshot.docs.length} colmenas in Firestore`);
         const result = snapshot.docs.map((doc) => {
           const data = convertFirestoreReferences(doc.data());
@@ -188,10 +194,13 @@ const resolvers = {
         throw new Error("Failed to fetch colmena");
       }
     },
-    cosechas: async () => {
+    cosechas: async (_, args, context) => {
       try {
-        console.log("Fetching all cosechas from Firestore...");
-        const snapshot = await db.collection("cosechas").get();
+        if (!context.user) {
+          throw new Error("Authentication required");
+        }
+        console.log("Fetching cosechas for user:", context.user.uid);
+        const snapshot = await db.collection("cosechas").where("userId", "==", context.user.uid).get();
         console.log(`Found ${snapshot.docs.length} cosechas in Firestore`);
         const result = snapshot.docs.map((doc) => {
           const data = convertFirestoreReferences(doc.data());
@@ -247,14 +256,14 @@ const resolvers = {
   Mutation: {
     createInsumo: async (_, { input }, context) => {
       try {
-        // Optional: Check authentication (commented out for development)
-        // if (!context.user) {
-        //   throw new Error("Authentication required");
-        // }
-        console.log("Creating insumo:", input, "User:", context.user?.uid || "anonymous");
+        if (!context.user) {
+          throw new Error("Authentication required");
+        }
+        console.log("Creating insumo:", input, "User:", context.user.uid);
 
         const newItem = {
           ...input,
+          userId: context.user.uid,
           creadoEn: admin.firestore.FieldValue.serverTimestamp(),
         };
 
@@ -302,10 +311,14 @@ const resolvers = {
     },
     createColmena: async (_, { input }, context) => {
       try {
-        console.log("Creating colmena:", input, "User:", context.user?.uid || "anonymous");
+        if (!context.user) {
+          throw new Error("Authentication required");
+        }
+        console.log("Creating colmena:", input, "User:", context.user.uid);
 
         const newColmena = {
           ...input,
+          userId: context.user.uid,
           creadoEn: admin.firestore.FieldValue.serverTimestamp(),
         };
 
@@ -345,11 +358,15 @@ const resolvers = {
     },
     createCosecha: async (_, { input }, context) => {
       try {
-        console.log("Creating cosecha:", input, "User:", context.user?.uid || "anonymous");
+        if (!context.user) {
+          throw new Error("Authentication required");
+        }
+        console.log("Creating cosecha:", input, "User:", context.user.uid);
 
         // Convert colmenaId path string to Firestore reference
         const newCosecha = {
           ...input,
+          userId: context.user.uid,
           colmenaId: input.colmenaId ? db.doc(input.colmenaId) : null,
           creadoEn: admin.firestore.FieldValue.serverTimestamp(),
         };
