@@ -237,8 +237,15 @@ const CosechaPage: React.FC<Props> = () => {
     if (loading) {
         return (
             <div className="dashboard-container">
-                <div style={{ marginBottom: 20 }}>
-                    <h2 style={{ margin: '0 0 10px 0', fontSize: '24px' }}>🍯 Cosechas</h2>
+                <div className="page-header">
+                    <div className="page-header-content">
+                        <div className="page-icon-wrapper">
+                            <span style={{ fontSize: '24px' }}>🍯</span>
+                        </div>
+                        <div className="page-header-text">
+                            <h2 className="page-title">Cosechas de Miel</h2>
+                        </div>
+                    </div>
                 </div>
                 <p style={{ textAlign: 'center', marginTop: '40px' }}>Cargando...</p>
             </div>
@@ -248,8 +255,15 @@ const CosechaPage: React.FC<Props> = () => {
     if (error) {
         return (
             <div className="dashboard-container">
-                <div style={{ marginBottom: 20 }}>
-                    <h2 style={{ margin: '0 0 10px 0', fontSize: '24px' }}>🍯 Cosechas</h2>
+                <div className="page-header">
+                    <div className="page-header-content">
+                        <div className="page-icon-wrapper">
+                            <span style={{ fontSize: '24px' }}>🍯</span>
+                        </div>
+                        <div className="page-header-text">
+                            <h2 className="page-title">Cosechas de Miel</h2>
+                        </div>
+                    </div>
                 </div>
                 <p style={{ textAlign: 'center', marginTop: '40px', color: 'red' }}>{error}</p>
             </div>
@@ -258,31 +272,39 @@ const CosechaPage: React.FC<Props> = () => {
 
     return (
         <div className="dashboard-container">
-            <div style={{ marginBottom: 20 }}>
-                <h2 style={{ margin: '0 0 10px 0', fontSize: '24px' }}>🍯 Cosechas de Miel</h2>
-                {!isCreating && !editingCosecha && (
-                    <>
-                        <button className="add-button" onClick={handleCreateNew} style={{ marginTop: 12, width: '100%' }}>
-                            + Nueva Cosecha
-                        </button>
-                        <div style={{ marginTop: 12 }}>
-                            <input
-                                type="text"
-                                placeholder="Filtrar por colmena..."
-                                value={filterColmena}
-                                onChange={(e) => setFilterColmena(e.target.value)}
-                                style={{
-                                    width: '100%',
-                                    padding: '10px',
-                                    border: '1px solid #e0e0e0',
-                                    borderRadius: '4px',
-                                    fontSize: '14px',
-                                }}
+            {/* Encabezado de Página */}
+            <div className="page-header">
+                <div className="page-header-content">
+                    <div className="page-icon-wrapper">
+                        <span style={{ fontSize: '24px' }}>🍯</span>
+                    </div>
+                    <div className="page-header-text">
+                        <h2 className="page-title">Cosechas de Miel</h2>
+                    </div>
+                </div>
+            </div>
+            {!isCreating && !editingCosecha && (
+                <>
+                    <button className="add-button" onClick={handleCreateNew} style={{ marginTop: 12, width: '100%' }}>
+                        + Nueva Cosecha
+                    </button>
+                    <div style={{ marginTop: 12, marginBottom: 20 }}>
+                        <input
+                            type="text"
+                            placeholder="Filtrar por colmena..."
+                            value={filterColmena}
+                            onChange={(e) => setFilterColmena(e.target.value)}
+                            style={{
+                                width: '100%',
+                                padding: '10px',
+                                border: '1px solid #e0e0e0',
+                                borderRadius: '4px',
+                                fontSize: '14px',
+                            }}
                             />
                         </div>
                     </>
                 )}
-            </div>
 
             {(isCreating || editingCosecha) && (
                 <div ref={editorRef} className="editor-panel">

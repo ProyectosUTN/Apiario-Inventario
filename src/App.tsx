@@ -66,7 +66,13 @@ const App: React.FC = () => {
 			{user ? (
 				<>
 					{page === 'dashboard' ? (
-						<DashboardScreen userEmail={user.email ?? undefined} onLogout={handleLogout} onOpenInventory={() => setPage('inventory')} />
+						<DashboardScreen 
+							userEmail={user.email ?? undefined} 
+							onLogout={handleLogout} 
+							onOpenInventory={() => setPage('inventory')}
+							onOpenColmenas={() => setPage('colmenas')}
+							onOpenCosechas={() => setPage('cosechas')}
+						/>
 					) : page === 'inventory' ? (
 						<InventoryPage onBack={() => setPage('dashboard')} />
 					) : page === 'colmenas' ? (

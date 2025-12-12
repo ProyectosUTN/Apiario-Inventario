@@ -49,6 +49,36 @@ const ColmenaPage: React.FC<Props> = () => {
         fetchColmenas();
     }, []);
 
+    // Detectar si venimos desde una alerta y abrir el editor automáticamente
+    useEffect(() => {
+        const targetItemId = sessionStorage.getItem('targetItemId');
+        if (targetItemId && colmenas.length > 0) {
+            const targetColmena = colmenas.find(c => c.id === targetItemId);
+            if (targetColmena) {
+                setEditingColmena(targetColmena);
+                setFormData({
+                    apiarioID: targetColmena.apiarioID || '',
+                    cantidadAlzas: targetColmena.cantidadAlzas || 0,
+                    codigo: targetColmena.codigo || '',
+                    edadReinaMeses: targetColmena.edadReinaMeses || 0,
+                    estado: targetColmena.estado ?? true,
+                    fechaInstalacion: targetColmena.fechaInstalacion || '',
+                    fotoURL: targetColmena.fotoURL || '',
+                    notas: targetColmena.notas || '',
+                    origenReina: targetColmena.origenReina || '',
+                    tipo: targetColmena.tipo || 'Langstroth',
+                });
+                setPhotoPreview(targetColmena.fotoURL || null);
+                // Limpiar el sessionStorage después de usarlo
+                sessionStorage.removeItem('targetItemId');
+                // Scroll al editor
+                setTimeout(() => {
+                    editorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+            }
+        }
+    }, [colmenas]);
+
     const fetchColmenas = async () => {
         try {
             setLoading(true);
@@ -94,7 +124,7 @@ const ColmenaPage: React.FC<Props> = () => {
                 return;
             }
             
-            // Validar tamaño (max 10MB)
+            // Validar tamaño
             if (file.size > 10 * 1024 * 1024) {
                 alert('La imagen es demasiado grande. El tamaño máximo es 10MB');
                 console.error('Archivo demasiado grande:', file.size);
@@ -261,7 +291,7 @@ const ColmenaPage: React.FC<Props> = () => {
             let fotoURL = formData.fotoURL || '';
             
             if (isCreating) {
-                // Primero crear la colmena para obtener el ID
+                
                 const CREATE_COLMENA = `mutation CreateColmena($input: ColmenaInput!) {
                     createColmena(input: $input) {
                         id
@@ -311,9 +341,9 @@ const ColmenaPage: React.FC<Props> = () => {
                     }
                 }
             } else if (editingColmena) {
-                // Si hay nueva foto, subirla
+                
                 if (selectedFile) {
-                    // Eliminar foto anterior si existe
+                    
                     if (formData.fotoURL) {
                         await deletePhoto(formData.fotoURL);
                     }
@@ -369,8 +399,15 @@ const ColmenaPage: React.FC<Props> = () => {
     if (loading) {
     return (
         <div className="dashboard-container">
-            <div style={{ marginBottom: 20 }}>
-                <h2 style={{ margin: '0 0 10px 0', fontSize: '24px' }}>🐝 Colmenas</h2>
+            <div className="page-header">
+                <div className="page-header-content">
+                    <div className="page-icon-wrapper">
+                        <span style={{ fontSize: '24px' }}>🐝</span>
+                    </div>
+                    <div className="page-header-text">
+                        <h2 className="page-title">Colmenas</h2>
+                    </div>
+                </div>
             </div>
             <p style={{ textAlign: 'center', marginTop: '40px' }}>Cargando...</p>
         </div>
@@ -380,8 +417,15 @@ const ColmenaPage: React.FC<Props> = () => {
 if (error) {
     return (
         <div className="dashboard-container">
-            <div style={{ marginBottom: 20 }}>
-                <h2 style={{ margin: '0 0 10px 0', fontSize: '24px' }}>🐝 Colmenas</h2>
+            <div className="page-header">
+                <div className="page-header-content">
+                    <div className="page-icon-wrapper">
+                        <span style={{ fontSize: '24px' }}>🐝</span>
+                    </div>
+                    <div className="page-header-text">
+                        <h2 className="page-title">Colmenas</h2>
+                    </div>
+                </div>
             </div>
             <p style={{ textAlign: 'center', marginTop: '40px', color: 'red' }}>{error}</p>
         </div>
@@ -390,14 +434,22 @@ if (error) {
 
 return (
     <div className="dashboard-container">
-        <div style={{ marginBottom: 20 }}>
-            <h2 style={{ margin: '0 0 10px 0', fontSize: '24px' }}>🐝 Colmenas</h2>
-            {!isCreating && !editingColmena && (
-                <button className="add-button" onClick={handleCreateNew} style={{ marginTop: 12, width: '100%' }}>
-                    + Nueva Colmena
-                </button>
-            )}
-        </div>            {(isCreating || editingColmena) && (
+        {/* Encabezado de Página */}
+        <div className="page-header">
+            <div className="page-header-content">
+                <div className="page-icon-wrapper">
+                    <span style={{ fontSize: '24px' }}>🐝</span>
+                </div>
+                <div className="page-header-text">
+                    <h2 className="page-title">Colmenas</h2>
+                </div>
+            </div>
+        </div>
+        {!isCreating && !editingColmena && (
+            <button className="add-button" onClick={handleCreateNew} style={{ marginTop: 12, marginBottom: 20, width: '100%' }}>
+                + Nueva Colmena
+            </button>
+        )}            {(isCreating || editingColmena) && (
                 <div ref={editorRef} className="editor-panel">
                     <h2>{isCreating ? 'Nueva Colmena' : 'Editar Colmena'}</h2>
                     <div className="form-grid">

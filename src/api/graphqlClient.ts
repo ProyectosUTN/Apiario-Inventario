@@ -49,7 +49,7 @@ export async function fetchGraphQL(query: string, variables?: Record<string, unk
   
   if (responseData.errors && Array.isArray(responseData.errors)) {
     console.error('[GraphQL] Errores GraphQL:', responseData.errors);
-    throw new Error(responseData.errors.map((e: any) => e.message ?? JSON.stringify(e)).join('; '));
+    throw new Error(responseData.errors.map((e: Record<string, unknown>) => e.message ?? JSON.stringify(e)).join('; '));
   }
   
   console.log('[GraphQL] Data extraída:', responseData.data);

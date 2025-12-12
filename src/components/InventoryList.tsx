@@ -6,19 +6,6 @@ import { fetchGraphQL } from '../api/graphqlClient';
 // GraphQL query string used in multiple places
 const GET_INSUMOS_STR = `query GetInsumos { insumos { id nombre cantidad unidad descripcion tipo creadoEn } }`;
 
-const fmtDate = (val: unknown) => {
-  try {
-    if (!val) return '';
-    // detectar Firestore Timestamp-like
-    const maybeTimestamp = val as { toDate?: () => Date; seconds?: number };
-    if (maybeTimestamp.toDate) return maybeTimestamp.toDate().toLocaleString();
-    if (typeof maybeTimestamp.seconds === 'number') return new Date(maybeTimestamp.seconds * 1000).toLocaleString();
-    return String(val);
-  } catch {
-    return String(val);
-  }
-};
-
 const InventoryList: React.FC = () => {
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -75,6 +62,22 @@ const InventoryList: React.FC = () => {
       if (pollingRef.current) window.clearInterval(pollingRef.current);
     };
   }, []);
+
+  
+  useEffect(() => {
+    const targetItemId = sessionStorage.getItem('targetItemId');
+    if (targetItemId && items.length > 0) {
+      const targetItem = items.find(item => item.id === targetItemId);
+      if (targetItem) {
+        // Usar setTimeout para evitar renderizados en cascada
+        setTimeout(() => {
+          setEditingId(targetItemId);
+        }, 0);
+        // Limpiar el sessionStorage después de usarlo
+        sessionStorage.removeItem('targetItemId');
+      }
+    }
+  }, [items]);
 
   // Update item with all fields
   const updateItem = async (id: string, data: Partial<InventoryItem>) => {
@@ -143,10 +146,6 @@ const InventoryList: React.FC = () => {
 
   return (
     <div style={{ marginTop: 20 }}>
-      <h3 className="section-title">Inventario</h3>
-      <div style={{ marginBottom: 8 }}>
-        <small style={{ color: 'gray' }}>Colección: {collectionName ?? 'detectando...'}</small>
-      </div>
       <div style={{ marginBottom: 8 }}>
         <button onClick={addNew} className="small-btn add-item-btn" disabled={creating}>
           <span>➕</span> Agregar ítem
@@ -170,7 +169,6 @@ const InventoryList: React.FC = () => {
                 <div style={{ marginTop: 6 }}>
                   <small>Cantidad: {item.cantidad ?? '—'} {item.unidad ?? ''}</small>
                   <span style={{ marginLeft: 8 }}><small>Tipo: {item.tipo ?? '—'}</small></span>
-                  <span style={{ marginLeft: 8 }}><small>Creado: {fmtDate(item.creadoEn)}</small></span>
                 </div>
               </div>
             </div>
