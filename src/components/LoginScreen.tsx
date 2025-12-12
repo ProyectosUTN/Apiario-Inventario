@@ -1,6 +1,4 @@
 import React, { useState } from 'react';
-// Asume que los estilos están en App.css o un archivo importado globalmente
-// Si no están, descomentar la siguiente línea si creaste un LoginScreen.css
 
 
 import { signInWithEmailAndPassword } from 'firebase/auth';
@@ -31,7 +29,7 @@ const LoginScreen: React.FC = () => {
             }
             await signInWithEmailAndPassword(auth, emailTrimmed, password);
             // onAuthStateChanged en App.tsx manejará la navegación
-        } catch (err: any) {
+        } catch (err: unknown) {
             // Mapeo de códigos de error de Firebase a mensajes amigables
             const friendlyMap: Record<string, string> = {
                 'auth/invalid-email': 'Correo electrónico inválido.',
@@ -41,8 +39,9 @@ const LoginScreen: React.FC = () => {
                 'auth/too-many-requests': 'Demasiados intentos. Intenta más tarde.'
             };
 
-            const codeStr = String((err as any)?.code ?? '');
-            const friendly = friendlyMap[codeStr] ?? err?.message ?? 'Error al iniciar sesión';
+            const error = err as { code?: string; message?: string };
+            const codeStr = String(error?.code ?? '');
+            const friendly = friendlyMap[codeStr] ?? error?.message ?? 'Error al iniciar sesión';
             setError(friendly);
         } finally {
             setLoading(false);
@@ -55,7 +54,7 @@ const LoginScreen: React.FC = () => {
                 <LogoIcon />
                 <h1>ApiManager</h1>
                 <h2>Iniciar Sesión en ApiManager</h2>
-                <p className="tagline">Administra tus APIs de forma segura y orgánica, desde un solo lugar.</p>
+                <p className="tagline">Administra tu Apiario de forma segura y orgánica, desde un solo lugar.</p>
             </div>
 
             <form className="login-form" onSubmit={handleSubmit}>
@@ -97,7 +96,7 @@ const LoginScreen: React.FC = () => {
             <div className="login-footer">
                 <a href="#" className="link-forgot">¿Olvidaste tu contraseña?</a>
                 <p>¿Aún no tienes cuenta? <a href="#" className="link-create-account">Crear cuenta</a></p>
-                <p className="design-note">Pensado para usarse con una sola mano: campos claros, botones grandes y pocas distracciones.</p>
+                <p className="design-note">Una herramienta pensada para ti.</p>
             </div>
         </div>
     );

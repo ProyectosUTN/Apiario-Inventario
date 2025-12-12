@@ -28,6 +28,7 @@ const typeDefs = `
     edadReinaMeses: Int
     estado: Boolean
     fechaInstalacion: String
+    fotoURL: String
     notas: String
     origenReina: String
     tipo: String
@@ -63,6 +64,7 @@ const typeDefs = `
     edadReinaMeses: Int
     estado: Boolean
     fechaInstalacion: String
+    fotoURL: String
     notas: String
     origenReina: String
     tipo: String

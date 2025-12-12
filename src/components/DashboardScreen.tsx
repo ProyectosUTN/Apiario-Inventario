@@ -71,7 +71,12 @@ const DashboardScreen: React.FC<Props> = ({ userEmail, onLogout }) => {
                 id 
                 nombre 
                 cantidad 
-            } 
+            }
+            cosechas {
+                id
+                cantidadKg
+                fecha
+            }
         }`;
 
         const fetchOnce = async () => {
@@ -80,14 +85,33 @@ const DashboardScreen: React.FC<Props> = ({ userEmail, onLogout }) => {
                 if (!mounted) return;
                 const colmenas = data?.colmenas ?? [];
                 const insumos = data?.insumos ?? [];
+                const cosechas = data?.cosechas ?? [];
 
                 // Count active colmenas (estado = true)
                 const colmenasActivas = colmenas.filter((c: { estado?: boolean }) => c.estado === true).length;
 
+                // Calculate miel del mes actual
+                const currentDate = new Date();
+                const currentMonth = currentDate.getMonth();
+                const currentYear = currentDate.getFullYear();
+
+                const mielDelMes = cosechas
+                    .filter((cosecha: { fecha?: string; cantidadKg?: number }) => {
+                        if (!cosecha.fecha) return false;
+                        const cosechaDate = new Date(cosecha.fecha);
+                        return (
+                            cosechaDate.getMonth() === currentMonth &&
+                            cosechaDate.getFullYear() === currentYear
+                        );
+                    })
+                    .reduce((total: number, cosecha: { cantidadKg?: number }) => {
+                        return total + (cosecha.cantidadKg ?? 0);
+                    }, 0);
+
                 // Build metrics from available data
                 setMetrics({
                     colmenasActive: colmenasActivas,
-                    mielThisMonth: '—',
+                    mielThisMonth: `${mielDelMes.toFixed(1)} kg`,
                     metricStatus: colmenasActivas > 0 
                         ? `${colmenasActivas} de ${colmenas.length} colmenas activas` 
                         : 'Sin colmenas activas'
