@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { fetchGraphQL } from '../api/graphqlClient';
-import { storage } from '../firebase';
+import { storage, db, auth } from '../firebase';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import { doc, getDoc } from 'firebase/firestore';
 
 type Colmena = {
     id: string;
@@ -30,6 +31,7 @@ const ColmenaPage: React.FC<Props> = () => {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [photoPreview, setPhotoPreview] = useState<string | null>(null);
     const [uploadingPhoto, setUploadingPhoto] = useState(false);
+    const [userApiaryName, setUserApiaryName] = useState<string>('');
     const editorRef = useRef<HTMLDivElement>(null);
 
     const [formData, setFormData] = useState<Partial<Colmena>>({
@@ -47,7 +49,23 @@ const ColmenaPage: React.FC<Props> = () => {
 
     useEffect(() => {
         fetchColmenas();
+        fetchUserApiaryName();
     }, []);
+
+    // Obtener el nombre del apiario del perfil del usuario
+    const fetchUserApiaryName = async () => {
+        if (auth?.currentUser && db) {
+            try {
+                const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    setUserApiaryName(userData.apiaryName || '');
+                }
+            } catch (err) {
+                console.error('Error al obtener perfil de usuario:', err);
+            }
+        }
+    };
 
     // Detectar si venimos desde una alerta y abrir el editor automáticamente
     useEffect(() => {
@@ -231,7 +249,7 @@ const ColmenaPage: React.FC<Props> = () => {
         setPhotoPreview(null);
         const newCodigo = generateNextColmenaCode();
         setFormData({
-            apiarioID: '',
+            apiarioID: userApiaryName || '',
             cantidadAlzas: 0,
             codigo: newCodigo,
             edadReinaMeses: 0,
@@ -506,12 +524,19 @@ return (
                         </div>
                         <div className="form-group">
                             <label>Origen Reina</label>
-                            <input
-                                type="text"
+                            <select
                                 value={formData.origenReina || ''}
                                 onChange={(e) => setFormData({ ...formData, origenReina: e.target.value })}
-                                placeholder="Origen de la reina"
-                            />
+                            >
+                                <option value="">Seleccionar...</option>
+                                <option value="Africanizada">Africanizada</option>
+                                <option value="Italiana">Italiana</option>
+                                <option value="Carniola">Carniola</option>
+                                <option value="Buckfast">Buckfast</option>
+                                <option value="Híbrida">Híbrida</option>
+                                <option value="Reina criolla">Reina criolla</option>
+                                <option value="Linea local">Linea local</option>
+                            </select>
                         </div>
                         <div className="form-group">
                             <label>Fecha Instalación</label>

@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { fetchGraphQL } from '../api/graphqlClient';
+import { doc, getDoc } from 'firebase/firestore';
+import { db, auth } from '../firebase';
 
 type Props = {
     userEmail?: string;
@@ -56,9 +58,28 @@ const DashboardScreen: React.FC<Props> = ({ userEmail, onOpenInventory, onOpenCo
     // const [tasks, setTasks] = useState<Task[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [userName, setUserName] = useState<string>('');
     // removed debugInfo state (was used for temporary debug panel)
 
     const pollRef = useRef<number | null>(null);
+
+    // Obtener el nombre del usuario desde Firestore
+    useEffect(() => {
+        const fetchUserProfile = async () => {
+            if (auth?.currentUser && db) {
+                try {
+                    const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
+                    if (userDoc.exists()) {
+                        const userData = userDoc.data();
+                        setUserName(userData.fullName || '');
+                    }
+                } catch (err) {
+                    console.error('Error al obtener perfil de usuario:', err);
+                }
+            }
+        };
+        fetchUserProfile();
+    }, []);
 
     useEffect(() => {
         // Query the GraphQL API for dashboard data and poll for updates.
@@ -373,7 +394,7 @@ const DashboardScreen: React.FC<Props> = ({ userEmail, onOpenInventory, onOpenCo
                         <GreetingIcon />
                     </div>
                     <div className="welcome-text">
-                        <h2 className="greeting">Hola{userEmail ? `, ${userEmail}` : ', Carlos'}!</h2>
+                        <h2 className="greeting">Hola{userName ? `, ${userName}` : (userEmail ? `, ${userEmail.split('@')[0]}` : '')}!</h2>
                         <p className="tagline-sm">Gestiona tus apiarios de un vistazo</p>
                     </div>
                 </div>
