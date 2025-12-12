@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { fetchGraphQL } from '../api/graphqlClient';
+import { doc, getDoc } from 'firebase/firestore';
+import { db, auth } from '../firebase';
 
 type Colmena = {
     id: string;
@@ -36,6 +38,7 @@ const CosechaPage: React.FC<Props> = () => {
     const [isCreating, setIsCreating] = useState(false);
     const [filterColmena, setFilterColmena] = useState<string>('');
     const [selectedApiario, setSelectedApiario] = useState<string>('');
+    const [userApiaryName, setUserApiaryName] = useState<string>('');
     const editorRef = useRef<HTMLDivElement>(null);
 
     const [formData, setFormData] = useState<Partial<Cosecha>>({
@@ -54,7 +57,23 @@ const CosechaPage: React.FC<Props> = () => {
     useEffect(() => {
         fetchCosechas();
         fetchColmenas();
+        fetchUserApiaryName();
     }, []);
+
+    // Obtener el nombre del apiario del perfil del usuario
+    const fetchUserApiaryName = async () => {
+        if (auth?.currentUser && db) {
+            try {
+                const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    setUserApiaryName(userData.apiaryName || '');
+                }
+            } catch (err) {
+                console.error('Error al obtener perfil de usuario:', err);
+            }
+        }
+    };
 
     const fetchCosechas = async () => {
         try {
@@ -106,7 +125,7 @@ const CosechaPage: React.FC<Props> = () => {
     const handleCreateNew = () => {
         setIsCreating(true);
         setEditingCosecha(null);
-        setSelectedApiario('');
+        setSelectedApiario(userApiaryName || '');
         setFormData({
             cantidadKg: 0,
             colmenaId: '',

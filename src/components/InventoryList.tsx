@@ -13,6 +13,7 @@ const InventoryList: React.FC = () => {
   const [collectionName, setCollectionName] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const pollingRef = useRef<number | null>(null);
 
@@ -132,6 +133,14 @@ const InventoryList: React.FC = () => {
     await loadInsumos();
   };
 
+  const deleteItem = async (id: string) => {
+    if (!collectionName) throw new Error('Collection not selected');
+    const MUT = `mutation DeleteInsumo($id: ID!) { deleteInsumo(id: $id) }`;
+    await fetchGraphQL(MUT, { id });
+    await loadInsumos();
+    setDeletingId(null);
+  };
+
   const getBadgeClass = (tipo?: string | null) => {
     if (!tipo) return 'badge-default';
     const t = String(tipo).toLowerCase().trim();
@@ -177,6 +186,7 @@ const InventoryList: React.FC = () => {
               <button onClick={() => changeQuantity(item.id, 1)} title="+1" className="small-btn qty-btn-plus">+1</button>
               <button onClick={() => changeQuantity(item.id, -1)} title="-1" className="small-btn qty-btn-minus">-1</button>
               <button onClick={() => setEditingId(item.id)} className="small-btn edit-btn">✏️ Editar</button>
+              <button onClick={() => setDeletingId(item.id)} className="small-btn delete-btn" title="Eliminar">🗑️</button>
             </div>
 
             {/* editing now uses modal editor */}
@@ -200,6 +210,36 @@ const InventoryList: React.FC = () => {
                 }
               }}
             />
+          </div>
+        </div>
+      )}
+
+      {deletingId && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
+          <div style={{ background: 'var(--card-bg, #fff)', padding: '20px', borderRadius: 8, width: '100%', maxWidth: 380, boxShadow: '0 8px 32px rgba(0,0,0,0.3)', maxHeight: '90vh', overflow: 'auto' }}>
+            <h3 style={{ marginTop: 0, marginBottom: 12, fontSize: '18px' }}>⚠️ Confirmar eliminación</h3>
+            <p style={{ marginBottom: 12, fontSize: '14px', wordWrap: 'break-word' }}>
+              ¿Eliminar <strong>{items.find(i => i.id === deletingId)?.nombre}</strong>?
+            </p>
+            <p style={{ marginBottom: 16, color: '#666', fontSize: '13px' }}>
+              Esta acción no se puede deshacer.
+            </p>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button 
+                onClick={() => setDeletingId(null)} 
+                className="small-btn cancel-btn"
+                style={{ padding: '6px 12px', fontSize: '14px' }}
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={() => deleteItem(deletingId)} 
+                className="small-btn delete-btn"
+                style={{ padding: '6px 12px', background: '#dc3545', color: 'white', fontSize: '14px' }}
+              >
+                🗑️ Eliminar
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 
 
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../firebase';
+import { doc, setDoc } from 'firebase/firestore';
+import { auth, db } from '../firebase';
 
 // Usamos el placeholder para el icono de la rejilla (el logo)
 const LogoIcon = () => (
@@ -19,6 +20,12 @@ const LoginScreen: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isRegistering, setIsRegistering] = useState(false);
+    
+    // Campos adicionales para el perfil de usuario
+    const [fullName, setFullName] = useState('');
+    const [phone, setPhone] = useState('');
+    const [apiaryName, setApiaryName] = useState('');
+    const [location, setLocation] = useState('');
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -34,6 +41,10 @@ const LoginScreen: React.FC = () => {
                 setError('La contraseña debe tener al menos 6 caracteres');
                 return;
             }
+            if (!fullName.trim()) {
+                setError('El nombre completo es requerido');
+                return;
+            }
         }
 
         setLoading(true);
@@ -45,7 +56,22 @@ const LoginScreen: React.FC = () => {
             
             if (isRegistering) {
                 // Crear nuevo usuario
-                await createUserWithEmailAndPassword(auth, emailTrimmed, password);
+                const userCredential = await createUserWithEmailAndPassword(auth, emailTrimmed, password);
+                const userId = userCredential.user.uid;
+                
+                // Guardar perfil de usuario en Firestore
+                if (db) {
+                    await setDoc(doc(db, 'users', userId), {
+                        uid: userId,
+                        email: emailTrimmed,
+                        fullName: fullName.trim(),
+                        phone: phone.trim() || null,
+                        apiaryName: apiaryName.trim() || null,
+                        location: location.trim() || null,
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString()
+                    });
+                }
             } else {
                 // Iniciar sesión
                 await signInWithEmailAndPassword(auth, emailTrimmed, password);
@@ -76,6 +102,10 @@ const LoginScreen: React.FC = () => {
         setIsRegistering(!isRegistering);
         setError(null);
         setConfirmPassword('');
+        setFullName('');
+        setPhone('');
+        setApiaryName('');
+        setLocation('');
     };
 
     return (
@@ -88,6 +118,22 @@ const LoginScreen: React.FC = () => {
             </div>
 
             <form className="login-form" onSubmit={handleSubmit}>
+                {isRegistering && (
+                    <div className="input-group">
+                        <label htmlFor="fullName">Nombre Completo *</label>
+                        <input
+                            type="text"
+                            id="fullName"
+                            name="fullName"
+                            placeholder="Tu nombre completo"
+                            value={fullName}
+                            onChange={(e) => setFullName(e.target.value)}
+                            required
+                            disabled={loading}
+                        />
+                    </div>
+                )}
+
                 <div className="input-group">
                     <label htmlFor="email">Correo electrónico</label>
                     <input
@@ -101,6 +147,49 @@ const LoginScreen: React.FC = () => {
                         disabled={loading}
                     />
                 </div>
+
+                {isRegistering && (
+                    <>
+                        <div className="input-group">
+                            <label htmlFor="phone">Teléfono (opcional)</label>
+                            <input
+                                type="tel"
+                                id="phone"
+                                name="phone"
+                                placeholder="+1 234 567 8900"
+                                value={phone}
+                                onChange={(e) => setPhone(e.target.value)}
+                                disabled={loading}
+                            />
+                        </div>
+
+                        <div className="input-group">
+                            <label htmlFor="apiaryName">Nombre del Apiario (opcional)</label>
+                            <input
+                                type="text"
+                                id="apiaryName"
+                                name="apiaryName"
+                                placeholder="Mi Apiario"
+                                value={apiaryName}
+                                onChange={(e) => setApiaryName(e.target.value)}
+                                disabled={loading}
+                            />
+                        </div>
+
+                        <div className="input-group">
+                            <label htmlFor="location">Ubicación (opcional)</label>
+                            <input
+                                type="text"
+                                id="location"
+                                name="location"
+                                placeholder="Ciudad, País"
+                                value={location}
+                                onChange={(e) => setLocation(e.target.value)}
+                                disabled={loading}
+                            />
+                        </div>
+                    </>
+                )}
 
                 <div className="input-group">
                     <label htmlFor="password">Contraseña</label>
