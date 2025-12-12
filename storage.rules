@@ -1,12 +1,22 @@
 rules_version = '2';
 
-// Craft rules based on data in your Firestore database
-// allow write: if firestore.get(
-//    /databases/(default)/documents/users/$(request.auth.uid)).data.isAdmin;
 service firebase.storage {
   match /b/{bucket}/o {
+    // Permitir lectura a todos los usuarios autenticados
     match /{allPaths=**} {
-      allow read, write: if false;
+      allow read: if request.auth != null;
+    }
+    
+    // Reglas específicas para fotos de colmenas
+    match /colmenas/{fileName} {
+      allow write: if request.auth != null
+                   && request.resource.size < 10 * 1024 * 1024 // Max 10MB
+                   && request.resource.contentType.matches('image/.*');
+    }
+    
+    // Reglas para otros archivos (si los hay)
+    match /{allPaths=**} {
+      allow write: if request.auth != null;
     }
   }
 }

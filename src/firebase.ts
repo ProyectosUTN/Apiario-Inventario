@@ -1,6 +1,7 @@
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
 import { getFirestore, type Firestore } from 'firebase/firestore';
+import { getStorage, type FirebaseStorage } from 'firebase/storage';
 
 // Preferir variables de entorno, pero si faltan usar el config hardcoded (fallback) para facilitar el debug local.
 // Usar un cast seguro para evitar errores de typing al indexar `import.meta.env`.
@@ -44,11 +45,13 @@ if (!envConfig.apiKey || !envConfig.projectId || !envConfig.appId) {
 let appInstance: FirebaseApp | null = null;
 let authInstance: Auth | null = null;
 let dbInstance: Firestore | null = null;
+let storageInstance: FirebaseStorage | null = null;
 
 try {
   appInstance = getApps().length ? getApp() : initializeApp(firebaseConfig);
   authInstance = appInstance ? getAuth(appInstance) : null;
   dbInstance = appInstance ? getFirestore(appInstance) : null;
+  storageInstance = appInstance ? getStorage(appInstance) : null;
   console.info('Firebase initialized for projectId=', firebaseConfig.projectId, ' (using env vars?)', !!envConfig.apiKey);
 } catch (e) {
   console.error('Firebase initialization error:', e);
@@ -56,4 +59,5 @@ try {
 
 export const auth: Auth | null = authInstance;
 export const db: Firestore | null = dbInstance;
+export const storage: FirebaseStorage | null = storageInstance;
 export default appInstance;

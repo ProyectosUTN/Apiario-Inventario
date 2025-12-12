@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { fetchGraphQL } from '../api/graphqlClient';
 
 type Colmena = {
@@ -36,6 +36,7 @@ const CosechaPage: React.FC<Props> = () => {
     const [isCreating, setIsCreating] = useState(false);
     const [filterColmena, setFilterColmena] = useState<string>('');
     const [selectedApiario, setSelectedApiario] = useState<string>('');
+    const editorRef = useRef<HTMLDivElement>(null);
 
     const [formData, setFormData] = useState<Partial<Cosecha>>({
         cantidadKg: 0,
@@ -139,6 +140,10 @@ const CosechaPage: React.FC<Props> = () => {
             panalesExtraidos: cosecha.panalesExtraidos || 0,
             tipoMiel: cosecha.tipoMiel || 'multifloral',
         });
+        // Hacer scroll al formulario de edición
+        setTimeout(() => {
+            editorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
     };
 
     const handleCancel = () => {
@@ -280,7 +285,7 @@ const CosechaPage: React.FC<Props> = () => {
             </div>
 
             {(isCreating || editingCosecha) && (
-                <div className="editor-panel">
+                <div ref={editorRef} className="editor-panel">
                     <h2>{isCreating ? 'Nueva Cosecha' : 'Editar Cosecha'}</h2>
                     <div className="form-grid">
                         <div className="form-group">
@@ -444,25 +449,25 @@ const CosechaPage: React.FC<Props> = () => {
                                     </span>
                                 </div>
                                 <div className="colmena-details">
-                                    <p><strong>📅 Fecha:</strong> {cosecha.fecha || 'N/A'}</p>
-                                    <p><strong>🌸 Floración:</strong> {cosecha.floracion || 'N/A'}</p>
-                                    <p><strong>💧 Humedad:</strong> {cosecha.humedad || 0}%</p>
-                                    <p><strong>🍯 Tipo:</strong> {cosecha.tipoMiel || 'N/A'}</p>
-                                    <p><strong>⚙️ Método:</strong> {cosecha.metodo || 'N/A'}</p>
-                                    <p><strong>📦 Panales:</strong> {cosecha.panalesExtraidos || 0}</p>
+                                    <p><strong>Fecha:</strong> {cosecha.fecha || 'N/A'}</p>
+                                    <p><strong>Floración:</strong> {cosecha.floracion || 'N/A'}</p>
+                                    <p><strong>Humedad:</strong> {cosecha.humedad || 0}%</p>
+                                    <p><strong>Tipo:</strong> {cosecha.tipoMiel || 'N/A'}</p>
+                                    <p><strong>Método:</strong> {cosecha.metodo || 'N/A'}</p>
+                                    <p><strong>Panales:</strong> {cosecha.panalesExtraidos || 0}</p>
                                     {cosecha.operador && (
-                                        <p><strong>👤 Operador:</strong> {cosecha.operador}</p>
+                                        <p><strong>Operador:</strong> {cosecha.operador}</p>
                                     )}
                                     {cosecha.notas && (
-                                        <p className="notas"><strong>📝 Notas:</strong> {cosecha.notas}</p>
+                                        <p className="notas"><strong>Notas:</strong> {cosecha.notas}</p>
                                     )}
                                 </div>
                                 <div className="colmena-actions">
                                     <button className="edit-button" onClick={() => handleEdit(cosecha)}>
-                                        ✏️ Editar
+                                        Editar
                                     </button>
                                     <button className="delete-button" onClick={() => handleDelete(cosecha.id)}>
-                                        🗑️ Eliminar
+                                        Eliminar
                                     </button>
                                 </div>
                             </div>
